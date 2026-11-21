@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Look up DNS records from your browser and copy the equivalent dig command.">
+  <meta name="theme-color" content="#f5f6fa">
+  <title>DNS Lookup Studio</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#lookup">Skip to lookup</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="wordmark" href="#top">
+        <span class="brand-mark" aria-hidden="true"><i class="icon icon-terminal"></i></span>
+        DNS<span class="wordmark-studio">Studio</span>
+      </a>
+      <nav class="navigation" aria-label="Main navigation">
+        <a href="#lookup">Lookup</a>
+        <a href="#history">History</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell" id="top">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <h1 id="page-title">DNS Lookup<span>.</span></h1>
+        <p>Query DNS records for a domain and see the equivalent <code>dig</code> command.</p>
+      </div>
+      <div class="network-art" aria-hidden="true">
+        <div class="network-grid"></div>
+        <div class="network-orbit orbit-outer"></div>
+        <div class="network-orbit orbit-inner"></div>
+        <div class="network-track track-a"></div>
+        <div class="network-track track-b"></div>
+        <div class="network-track track-c"></div>
+        <div class="network-track track-d"></div>
+        <span class="network-label node-a">A</span>
+        <span class="network-label node-mx">MX</span>
+        <span class="network-label node-txt">TXT</span>
+        <span class="network-dot dot-a"></span>
+        <span class="network-dot dot-b"></span>
+        <span class="network-dot dot-c"></span>
+        <span class="network-center"><i class="icon icon-globe"></i></span>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <div class="primary-column">
+        <section class="panel" id="lookup" aria-labelledby="lookup-heading">
+          <div class="panel-heading">
+            <span class="section-icon" aria-hidden="true"><i class="icon icon-search"></i></span>
+            <div>
+              <h2 id="lookup-heading">New lookup</h2>
+              <p>Choose a domain, record type, and resolver.</p>
+            </div>
+          </div>
+          <form id="lookup-form" novalidate>
+            <div class="form-fields">
+              <div class="field domain-field">
+                <label for="domain-input" id="domain-label">Domain name</label>
+                <div class="domain-control">
+                  <i class="icon icon-globe" aria-hidden="true"></i>
+                  <input id="domain-input" name="domain" type="text" placeholder="example.com" inputmode="url" spellcheck="false" autocorrect="off" autocapitalize="none" autocomplete="off" aria-describedby="form-error" required>
+                </div>
+              </div>
+              <div class="field">
+                <label for="record-type">Record type</label>
+                <div class="select-wrap">
+                  <select id="record-type" name="record-type">
+                    <option>A</option>
+                    <option>AAAA</option>
+                    <option>MX</option>
+                    <option>TXT</option>
+                    <option>CNAME</option>
+                    <option>NS</option>
+                    <option>SOA</option>
+                    <option>CAA</option>
+                    <option>PTR</option>
+                    <option>SRV</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="resolver">Resolver</label>
+                <div class="select-wrap">
+                  <select id="resolver" name="resolver">
+                    <option value="google">Google DNS</option>
+                    <option value="cloudflare">Cloudflare</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <p class="form-error" id="form-error" role="alert" hidden></p>
+            <div class="form-actions">
+              <label class="checkbox-label"><input type="checkbox" name="dnssec" id="dnssec"> Request DNSSEC records</label>
+              <button class="button button-primary" type="submit" id="lookup-button">
+                <i class="icon icon-search" aria-hidden="true"></i><span data-button-label>Run lookup</span>
+              </button>
+            </div>
+          </form>
+          <div class="examples" aria-label="Example lookups">
+            <span>Try an example</span>
+            <button type="button" class="example" data-domain="example.com" data-record="A">example.com <span>A</span></button>
+            <button type="button" class="example" data-domain="google.com" data-record="MX">google.com <span>MX</span></button>
+            <button type="button" class="example" data-domain="cloudflare.com" data-record="TXT">cloudflare.com <span>TXT</span></button>
+          </div>
+        </section>
+
+        <section class="panel results-panel" id="results" aria-labelledby="results-heading" aria-busy="false">
+          <div class="panel-heading">
+            <span class="section-icon" aria-hidden="true"><i class="icon icon-list"></i></span>
+            <div>
+              <h2 id="results-heading">Results</h2>
+              <p id="result-meta" aria-live="polite">DNS answers from your selected resolver.</p>
+            </div>
+            <div class="result-actions">
+              <span id="result-status" class="status" data-state="idle">Ready</span>
+              <button id="copy-results" class="button button-outline button-small" type="button" hidden>
+                <i class="icon icon-copy" aria-hidden="true"></i><span data-copy-label>Copy results</span>
+              </button>
+            </div>
+          </div>
+          <div class="result-empty" id="result-empty" role="status">
+            <span class="empty-icon" aria-hidden="true"><i class="icon icon-globe"></i></span>
+            <strong id="empty-title">No lookup yet</strong>
+            <p id="empty-message">Enter a domain or choose an example to get started.</p>
+          </div>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="DNS answer records">
+            <table id="result-table" hidden>
+              <thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col">TTL</th><th scope="col">Value</th></tr></thead>
+              <tbody id="result-rows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <aside class="sidebar" aria-label="Lookup tools">
+        <section class="panel cli-panel" aria-labelledby="cli-heading">
+          <div class="panel-heading">
+            <span class="section-icon" aria-hidden="true"><i class="icon icon-terminal"></i></span>
+            <div>
+              <h2 id="cli-heading">CLI equivalent</h2>
+              <p>Use these query settings with <code>dig</code>.</p>
+            </div>
+          </div>
+          <div class="command-box">
+            <span class="command-prompt" aria-hidden="true">$</span>
+            <code id="cli-command">dig @8.8.8.8 example.com A</code>
+          </div>
+          <button id="copy-command" class="button button-outline copy-command" type="button">
+            <i class="icon icon-copy" aria-hidden="true"></i><span data-copy-label>Copy command</span>
+          </button>
+        </section>
+
+        <section class="panel history-panel" id="history" aria-labelledby="history-heading">
+          <div class="panel-heading">
+            <span class="section-icon" aria-hidden="true"><i class="icon icon-clock"></i></span>
+            <div>
+              <h2 id="history-heading">Recent lookups</h2>
+              <p>Saved in this browser.</p>
+            </div>
+            <button class="text-button" id="clear-history" type="button" hidden>Clear</button>
+          </div>
+          <ul class="history-list" id="history-list"></ul>
+          <p class="history-empty" id="history-empty">Your recent lookups will appear here.</p>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="site-footer">
+      <span>DNS Studio</span>
+      <span>Queries are sent directly to the selected DNS-over-HTTPS resolver.</span>
+    </footer>
+  </main>
+</body>
+</html>
